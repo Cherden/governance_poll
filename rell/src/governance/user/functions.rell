@@ -1,0 +1,16 @@
+import governance;
+
+function find_by_pubkey(pubkey) : governance.User? {
+    return governance.User @? {.pubkey == pubkey};
+}
+
+function construct(pubkey) : governance.User? {
+	if (find_by_pubkey(pubkey) != null) {
+		print("governance_user.construct: User already exists");
+		return null;
+	}
+	
+	return create governance.User(
+		pubkey = pubkey
+	);
+}

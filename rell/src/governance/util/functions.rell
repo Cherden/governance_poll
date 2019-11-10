@@ -1,0 +1,3 @@
+function now() : timestamp {
+    return op_context.last_block_time;
+}

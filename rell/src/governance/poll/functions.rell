@@ -1,0 +1,44 @@
+import governance;
+import governance.util;
+import governance_user: governance.user;
+import governance_poll: governance.poll;
+import governance_vote: governance.vote;
+
+function get_next_id() : integer {
+     if ((governance.Poll @* {}).size() == 0){ 
+        return 1;
+    } else {
+        return (governance.Poll @* {} (-sort .id) limit 1)[0] + 1;
+    }
+}
+
+function find_by_id(poll_id: integer) : governance.Poll? {
+    return governance.Poll @? {.id == poll_id};
+}
+
+function construct(pubkey, info: json) : governance.Poll? {
+	val user = governance_user.find_by_pubkey(pubkey);
+	if (user == null) {
+		print("governance_poll.construct: User does not exist");
+		return null;
+	}
+	
+	if (user.balance < governance.Parameters.poll_creation_cost) {
+		print("governance_poll.construct: User does not have enough balance to create poll");
+		return null;
+	}
+	
+	if (not governance.poll_check_on_creation(user, info)) {
+		print("governance_poll.construct: External conditions failed");
+		return null;
+	}
+	
+	val end_date = util.now() + governance.Parameters.poll_length;
+	
+	return create governance.Poll(
+		id = get_next_id(),
+		creator = user,
+		end_date = end_date,
+		info = info
+	);
+}

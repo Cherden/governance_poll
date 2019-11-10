@@ -1,0 +1,54 @@
+import governance;
+import governance.util;
+import governance_poll: governance.poll;
+import governance_user: governance.user;
+
+function construct(pubkey, poll_id: integer, verdict: integer) : governance.Vote? {
+	val user = governance_user.find_by_pubkey(pubkey);
+	if (user == null) {
+		print("governance_vote.construct: User does not exist");
+		return null;
+	}
+	
+	val poll = governance_poll.find_by_id(poll_id);
+	if (poll == null) {
+		print("governance_vote.construct: Poll does not exist");
+		return null;
+	}
+	
+	val absoulute_verdict = abs(verdict);
+	if (absoulute_verdict > user.balance) {
+		print("governance_vote.construct: User's balance is too low");
+		return null;
+	}
+	
+	if (not governance.Parameters.can_vote_on_own_poll and user == poll.creator) {
+		print("governance_vote.construct: User tried to vote on own poll");
+		return null;
+	}
+	
+	if (util.now() > poll.end_date) {
+		print("governance_vote.construct: User tried to vote on expired poll");
+		return null;
+	}
+	
+	if (not governance.vote_check_on_execute(user, poll, verdict)) {
+		print("governance_vote.construct: External conditions failed");
+		return null;
+	}
+	
+	user.balance -= absoulute_verdict;
+	
+	if (verdict > 0) {
+		poll.upvotes += absoulute_verdict;
+	} else if (verdict < 0) {
+		poll.downvotes += absoulute_verdict;		
+	}
+	
+	return create governance.Vote (
+		voter = user,
+		poll = poll,
+		time = util.now(),
+		verdict = verdict
+	);
+}

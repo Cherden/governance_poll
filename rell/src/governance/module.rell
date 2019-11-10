@@ -1,0 +1,23 @@
+@mount('Governance')
+module;
+
+entity User {
+	key pubkey : pubkey;
+	mutable balance : integer = 0;
+}
+
+entity Poll {
+	key id : integer;
+	creator : User;
+	end_date : timestamp;
+	info : json;
+	mutable upvotes : integer = 0;
+	mutable downvotes : integer = 0;
+}
+
+entity Vote {
+	voter : User;
+	poll : Poll;
+	time : timestamp;
+	verdict : integer;
+}

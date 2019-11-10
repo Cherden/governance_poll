@@ -1,0 +1,26 @@
+import governance;
+
+operation main() {
+	val pk = byte_array.from_list([1]);
+	
+	val user = governance.create_user(pk);
+	val check_user = governance.get_user_by_pubkey(pk);
+	if (user == null or check_user == null or user != check_user) {
+		print("User creation failed");
+		return;
+	}
+		
+	governance.create_poll(pk, json("{}"));
+	
+	user.balance += 1000;
+	
+	val poll = governance.create_poll(pk, json("{}"))!!;
+	governance.create_vote(pk, poll.id, 100);
+	
+	val votes = governance.get_votes_by_poll(poll);
+	for (vote in votes) {
+		print("verdict " + vote.verdict);
+	}
+	
+	print("poll ups " + poll.upvotes + " and downs" + poll.downvotes);
+}

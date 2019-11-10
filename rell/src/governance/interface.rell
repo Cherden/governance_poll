@@ -1,0 +1,76 @@
+import governance;
+import governance.util;
+import governance_user: governance.user;
+import governance_vote: governance.vote;
+import governance_poll : governance.poll;
+
+
+object Parameters {
+	poll_creation_cost : integer = 10;		// Balance cost for poll creation
+	poll_length : integer = 60*60*24*7; 	// Length of a poll
+	can_vote_on_own_poll: boolean = true;	// Can users vote on their own polls
+}
+
+// Functions for user
+function create_user(pubkey) : governance.User? {
+	return governance_user.construct(pubkey);
+}
+
+function get_user_by_pubkey(pubkey) : governance.User? {
+	return governance_user.find_by_pubkey(pubkey);
+}
+
+
+// Functions for polls
+function create_poll(pubkey, info: json) : governance.Poll? {
+	return governance_poll.construct(pubkey, info);
+}
+
+function get_poll_by_id(poll_id: integer) : governance.Poll? {
+    return governance_poll.find_by_id(poll_id);
+}
+
+function get_polls_by_user(user: governance.User) : list<governance.Poll> {
+	return governance.Poll @* {.creator == user};
+}
+
+function get_all_open_polls() : list<governance.Poll> {
+	return governance.Poll @* {.end_date > util.now()};
+}
+
+
+// Functions for votes
+function create_vote(pubkey, poll_id: integer, verdict: integer) : governance.Vote? {
+	return governance_vote.construct(pubkey, poll_id, verdict);
+}
+
+function get_votes_by_user(user: governance.User) : list<governance.Vote> {
+	return governance.Vote @* {.voter == user};
+}
+
+function get_votes_by_poll(poll: governance.Poll) : list<governance.Vote> {
+	return governance.Vote @* {.poll == poll};
+}
+
+
+// Check functions
+
+/* This function is invoked when a new poll gets created
+*  Before the function is called, the following checks have been made:
+*  - Does the user exist?
+*  - Does the user have enough balance to create the poll?
+*/
+function poll_check_on_creation(user: governance.User, info: json) : boolean {
+	return true;
+}
+
+/* This function is invoked when a new vote gets executed
+*  Before the function is called, the following checks have been made:
+*  - Does the user and poll exist?
+*  - Does the user have enough balance to vote the amount of times?
+*  - Does a user try to vote on his own poll when it is forbidden?
+*  - Is the poll to vote on already expired?
+*/
+function vote_check_on_execute(user: governance.User, poll: governance.Poll, verdict: integer) : boolean {
+	return true;
+}
